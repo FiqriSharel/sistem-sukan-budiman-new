@@ -17,7 +17,16 @@ class PublicRegistrationController extends Controller
 {
     public function landing()
     {
-        return view('public.landing');
+        return view('public.landing', [
+            'settings' => Setting::allAsArray(),
+            'registrationIsOpen' => Setting::registrationIsOpen(),
+            'houses' => House::orderBy('name')->get(),
+            'sports' => Sport::where('is_active', true)
+                ->withCount(['acceptedRegistrations', 'waitingListRegistrations'])
+                ->orderBy('category')
+                ->orderBy('name')
+                ->get(),
+        ]);
     }
 
     public function create()
