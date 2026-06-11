@@ -3,7 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\Participant;
+use App\Models\Sport;
+use App\Support\PhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreParticipantRequest extends FormRequest
@@ -23,32 +26,59 @@ class StoreParticipantRequest extends FormRequest
      */
     public function rules(): array
     {
-        $isChild = (int) $this->input('age') < Participant::CHILD_AGE_THRESHOLD || $this->input('category') === 'Kanak-Kanak';
+        $age = (int) $this->input('age');
+        $category = Participant::categoryForAge($age);
+        $isChild = $age > 0 && $category === 'Kanak-Kanak';
 
         return [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('participants')->where(fn ($query) => $query->where('phone', $this->input('phone'))),
             ],
             'age' => ['required', 'integer', 'min:1', 'max:120'],
-            'phone' => ['required', 'string', 'max:20', 'regex:/^(\\+?6?01)[0-46-9]-?[0-9]{7,8}$/'],
-            'category' => ['required', Rule::in(['Kanak-Kanak', 'Dewasa', 'Terbuka'])],
+            'phone' => [$isChild ? 'nullable' : 'required', 'string', 'max:20', 'regex:/^(\\+?6?01)[0-9]-?[0-9]{7,8}$/'],
             'house_id' => ['required', 'exists:houses,id'],
-            'sport_id' => ['nullable', 'exists:sports,id'],
+            'sport_ids' => ['required', 'array', 'min:1'],
+            'sport_ids.*' => [
+                'integer',
+                'required',
+                'distinct',
+                Rule::exists('sports', 'id')->where('is_active', true),
+                function (string $attribute, mixed $value, \Closure $fail) use ($category) {
+                    $sport = Sport::find($value);
+
+                    if ($sport && $category && ! $sport->compatibleWithCategory($category)) {
+                        $fail('Acara yang dipilih tidak sesuai dengan kategori peserta.');
+                    }
+                },
+            ],
             'guardian_name' => [$isChild ? 'required' : 'nullable', 'string', 'max:255'],
-            'guardian_phone' => [$isChild ? 'required' : 'nullable', 'string', 'max:20', 'regex:/^(\\+?6?01)[0-46-9]-?[0-9]{7,8}$/'],
+            'guardian_phone' => [$isChild ? 'required' : 'nullable', 'string', 'max:20', 'regex:/^(\\+?6?01)[0-9]-?[0-9]{7,8}$/'],
             'guardian_relationship' => [$isChild ? 'required' : 'nullable', 'string', 'max:100'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $age = (int) $this->input('age');
+
+        $this->merge([
+            'name' => Str::of($this->input('name'))->squish()->toString(),
+            'phone' => PhoneNumber::normalize($this->input('phone')),
+            'guardian_phone' => PhoneNumber::normalize($this->input('guardian_phone')),
+            'category' => $age > 0 ? Participant::categoryForAge($age) : null,
+        ]);
     }
 
     public function messages(): array
     {
         return [
-            'name.unique' => 'Pendaftaran dengan nama dan nombor telefon ini telah wujud.',
             '*.required' => 'Medan ini wajib diisi.',
             '*.regex' => 'Sila masukkan nombor telefon Malaysia yang sah.',
+            'sport_ids.required' => 'Sila pilih sekurang-kurangnya satu acara.',
+            'sport_ids.*.exists' => 'Acara yang dipilih tidak tersedia.',
+            'sport_ids.*' => 'Acara yang dipilih tidak sesuai dengan kategori umur peserta.',
         ];
     }
 }

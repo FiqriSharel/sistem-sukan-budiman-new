@@ -64,6 +64,38 @@ The seeders create:
 
 Change this password before using the system in a real event.
 
+## Production Admin Account
+
+After deployment, create a real admin account through Tinker:
+
+```bash
+php artisan tinker
+```
+
+Then run the following command. Replace the email and password with the real production credentials:
+
+```php
+\App\Models\User::create([
+    'name' => 'Admin',
+    'email' => 'admin@example.com',
+    'password' => \Illuminate\Support\Facades\Hash::make('your-secure-password'),
+]);
+```
+
+If the default admin account already exists and only needs to be changed to a real email:
+
+```php
+$user = \App\Models\User::where('email', 'admin@budiman.test')->first();
+
+$user->update([
+    'name' => 'Admin',
+    'email' => 'real-admin@example.com',
+    'password' => \Illuminate\Support\Facades\Hash::make('your-secure-password'),
+]);
+```
+
+After that, log in through `/login` with the real admin email. Use a strong production password and do not keep `password` as the admin password.
+
 ## Run Locally
 
 ```bash
@@ -99,6 +131,9 @@ npm run build
 - `/admin/houses` - Sports house management
 - `/admin/sports` - Sports/event management
 - `/admin/reports` - Reports and CSV export
+- `/admin/reports/print` - Print-friendly participant list
+- `/admin/audit-logs` - Admin audit log
+- `/admin/settings` - Registration and event settings
 
 ## Main Features
 
@@ -106,13 +141,19 @@ npm run build
 - Unique registration code generation
 - Public users cannot edit submitted details
 - Guardian details required for child participants
+- Participant category is calculated automatically from age: below 12 is `Kanak-Kanak`, 12 and above is `Dewasa`
+- `Terbuka` events can be selected by both child and adult participants
 - Admin can add, view, edit, and delete participant records
 - Admin can manage sports houses
 - Admin can manage sports/events
 - Admin can assign participants to sports/events
 - CSV export for participant records
+- Print-friendly participant lists
 - Simple WhatsApp reminder link
 - Audit logging for admin create, update, and delete actions
+- Registration open/close settings, deadline, event date, event time, venue, and admin contact
+- Event capacity handling with `Diterima` and `Senarai Menunggu` statuses
+- Admin login is not linked from public pages; admins can open `/login` directly
 
 ## Testing
 
@@ -123,15 +164,10 @@ php artisan test
 ## Current Limitations
 
 - No paid SMS or WhatsApp API integration.
-- Audit logs are recorded in the database, but there is no dedicated admin audit log page yet.
 - Full role management with Spatie Laravel Permission is not installed because the current version only needs a basic admin user.
-- Event date, time, and location are not yet configurable system settings.
+- The system does not generate PDFs automatically; printing is handled through print-friendly browser pages.
 
 ## Future Improvements
 
-- Admin audit log page.
-- Configurable event date, time, and location.
-- Printable participant lists by sports house or event.
 - QR code generator for the `/daftar` registration link.
 - Additional roles such as registration crew or event coordinator.
-

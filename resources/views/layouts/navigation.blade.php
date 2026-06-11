@@ -5,8 +5,8 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 font-bold text-green-900">
-                        <span class="grid h-10 w-10 place-items-center rounded-lg bg-green-800 text-white">SB</span>
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 font-bold text-budiman-primary">
+                        <img src="{{ asset('images/jpkk-kampung-budiman.png') }}" alt="JPKK Kampung Budiman" class="h-10 w-auto rounded bg-white object-contain">
                         <span class="hidden leading-tight sm:block">Sukan<br>Budiman</span>
                     </a>
                 </div>
@@ -27,6 +27,12 @@
                     </x-nav-link>
                     <x-nav-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')">
                         Laporan
+                    </x-nav-link>
+                    <x-nav-link :href="route('admin.audit-logs.index')" :active="request()->routeIs('admin.audit-logs.*')">
+                        Audit
+                    </x-nav-link>
+                    <x-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                        Tetapan
                     </x-nav-link>
                 </div>
             </div>
@@ -94,6 +100,12 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')">
                 Laporan
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.audit-logs.index')" :active="request()->routeIs('admin.audit-logs.*')">
+                Audit
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.settings.edit')" :active="request()->routeIs('admin.settings.*')">
+                Tetapan
             </x-responsive-nav-link>
         </div>
 
